@@ -1,4 +1,4 @@
-MRuby::Gem::Specification.new('c_and_ruby_extension_example') do |spec|
+MRuby::Gem::Specification.new('mriso') do |spec|
   spec.license = 'MIT'
   spec.authors = 'Beoran'
  

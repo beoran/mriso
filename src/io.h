@@ -11,14 +11,22 @@
 extern "C" {
 #endif
 
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include "mruby/string.h"
+#include "mruby/class.h"
+#include "mruby/data.h"
+#include "mruby.h"
+
 
 /* IO struct. Use a FILE pointer since this implementation of IO/File
 * is limited to pure ANSI C stdio capabilities.
 */
-struct mrb_io {
+struct mriso_io {
   FILE              * stream;
-  mrb_value           path;
-  mrb_value           mode;
+  char              * path;
+  char              * mode;
   int                 readable;
   int                 writeable;
   int                 openness;
@@ -26,28 +34,27 @@ struct mrb_io {
 };
 
 
-/** IO errors. */
+/* IO errors. */
 #define E_IO_ERROR             (mrb_class_obj_get(mrb, "IOError"))
 
-/** IO mrubt datatype. */
-extern struct mrb_data_type mrb_io_type;
+/* mruby datatype for io. */
+extern struct mrb_data_type mriso_io_type;
 
 
-/** Wraps an mrb_io into an mrb_value */
+/* Wraps an mrb_io into ab_value */
 static mrb_value
-mrb_io_wrap(mrb_state *mrb, struct RClass *ioc, struct mrb_io *io);
+mriso_io_wrap(mrb_state *mrb, struct RClass *ioc, struct mriso_io *io);
 
-/** Initializes an mrb_io object. */
-struct mrb_io*
-mrb_io_init(mrb_state * mrb, struct mrb_io * io,
-            FILE * stream, mrb_value path, mrb_value mode,
+/* Initializes an mrb_io object. */
+struct mriso_io*
+mriso_io_init(mrb_state * mrb, struct mriso_io * io,
+            FILE * stream, const char * path, const char * mode,
             int readable, int writeable, int openness, int buffering);
 
-/* Unwraps an mrb_io from an mrb_value */
-#ifndef mrb_io_unwrap
-#define mrb_io_unwrap(MRB, SELF)                                        \
-        (struct mrb_io *)mrb_get_datatype((MRB), (SELF), &mrb_io_type)
-#endif
+struct mriso_io*
+mriso_io_unwrap(mrb_state * mrb, mrb_value self);
+
+
 
 
 
