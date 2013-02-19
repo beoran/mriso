@@ -20,7 +20,7 @@ struct mrb_data_type mriso_io_type = { "IO", mriso_io_free };
 /** Unwraps an mriso_io into an mrb_value. */
 struct mriso_io*
 mriso_io_unwrap(mrb_state * mrb, mrb_value self) {
-  return mrb_get_datatype(mrb, self, mrb_class_ptr(self), mriso_io_type);
+  return mrb_get_datatype(mrb, self, &mriso_io_type);
 }
 
 
@@ -89,7 +89,7 @@ static int mriso_io_isreadable(struct mriso_io * io) {
 /* Returns an unwrapped IO, but only if it is writable. 
  Raises an exception otherwise. */
 static struct mriso_io * 
-mriso_io_unwrap_writable(mrb_state * state, mrb_value self) {
+mriso_io_unwrap_writable(mrb_state * mrb, mrb_value self) {
   struct mriso_io * io = mriso_io_unwrap(mrb, self);
   if(!mriso_io_iswritable(io)) { 
      mrb_raise(mrb, E_IO_ERROR, "not opened for writing");
@@ -100,7 +100,7 @@ mriso_io_unwrap_writable(mrb_state * state, mrb_value self) {
 /* Returns an unwrapped IO, but only if it is readable. 
  Raises an exception otherwise. */
 static struct mriso_io * 
-mriso_io_unwrap_readable(mrb_state * state, mrb_value self) {
+mriso_io_unwrap_readable(mrb_state * mrb, mrb_value self) {
   struct mriso_io * io = mriso_io_unwrap(mrb, self);
   if(!mriso_io_iswritable(io)) { 
      mrb_raise(mrb, E_IO_ERROR, "not opened for reading");
@@ -215,7 +215,7 @@ mriso_io_getc(mrb_state *mrb, mrb_value self) {
  * returns a truncated line, without the \n, but with the \0 appended.
  */
 char * mriso_gets(FILE * stream) {
-  int char;
+  int    ch;
   char * result;
   char * aid;
   return NULL;
@@ -277,7 +277,7 @@ mriso_io_print(mrb_state *mrb, mrb_value self) {
   if(!mriso_io_iswritable(io)) { 
     mrb_raise(mrb, E_IO_ERROR, "not opened for writing");
   }
-  // XXX/ does not invoke write, but fputs since it seems more logical
+  // XXX/ does not invoke write, but fprintf, etc since it seems more logical
   // and will be more performant
   mrb_get_args(mrb, "o", &val);
   switch (mrb_type(val)) {
@@ -286,7 +286,7 @@ mriso_io_print(mrb_state *mrb, mrb_value self) {
     return val;
   case MRB_TT_STRING:
     if (RSTRING_LEN(val) > 0) {
-      fprintf("%s", io->stream, RSTRING_PTR(val));
+      fprintf(io->stream, "%s", RSTRING_PTR(val));
     }
     return val;
     default:
@@ -425,10 +425,10 @@ mriso_io_readlines(mrb_state *mrb, mrb_value self) {
 static mrb_value
 mriso_io_sync(mrb_state *mrb, mrb_value self) {
   struct mriso_io * io = mriso_io_unwrap(mrb, self);
-  if (io->buffering) > 0 { 
+  if ((io->buffering) > 0) { 
     return mrb_false_value();
   } 
-  return mrb_true_value(0);
+  return mrb_true_value();
 }
 
 /*
@@ -437,9 +437,9 @@ mriso_io_sync(mrb_state *mrb, mrb_value self) {
 static mrb_value
 mriso_io_sync_(mrb_state *mrb, mrb_value self) {
   struct mriso_io * io = mriso_io_unwrap(mrb, self);
-  mrb_value v;
-  mrb_get_args(mrb, "i", &v);
-  io->buffering = mrb_int(v); 
+  int i;
+  mrb_get_args(mrb, "i", &i);
+  io->buffering = i; 
   return mrb_fixnum_value(0);
 }
 
@@ -501,7 +501,7 @@ mrb_init_io(mrb_state *mrb)
   /* 15.2.20.5.12 */
   mrb_define_method(mrb, io, "putc"     , mriso_io_putc, ARGS_REQ(1));
   /* 15.2.20.5.13 */
-  mrb_define_method(mrb, io, "puts"     , mriso_io_puts, ARGS_ANY);
+  mrb_define_method(mrb, io, "puts"     , mriso_io_puts, ARGS_ANY());
   /* 15.2.20.5.15 */
   mrb_define_method(mrb, io, "readchar" , mriso_io_readchar, ARGS_NONE());
   /* 15.2.20.5.16 */
